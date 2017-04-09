@@ -23,9 +23,9 @@ namespace ExpenseTracker.API.Controllers
         public ExpenseGroupsController(IExpenseTrackerRepository repository)
         {
             _repository = repository;
-        }    
+        }
 
-
+        //api/expenseGroups
         public IHttpActionResult Get()
         {
             try
@@ -33,12 +33,12 @@ namespace ExpenseTracker.API.Controllers
                 var expenseGroups = _repository.GetExpenseGroups();
 
                 return Ok(expenseGroups.ToList()
-                    .Select(eg => _expenseGroupFactory.CreateExpenseGroup(eg)));
+                    .Select(eg => _expenseGroupFactory.CreateExpenseGroup(eg)));//http status-200
 
             }
             catch (Exception)
             {
-                return InternalServerError();
+                return InternalServerError(); //http status-500
             }
         }
     }

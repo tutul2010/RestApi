@@ -14,7 +14,7 @@ namespace ExpenseTracker.Repository.Entities
             Expenses = new HashSet<Expense>();
         }
 
-        public int Id { get; set; }
+        public int Id { get; set; } //pk
 
         [Required]
         [StringLength(100)]
@@ -28,10 +28,10 @@ namespace ExpenseTracker.Repository.Entities
         [StringLength(250)]
         public string Description { get; set; }
 
-        public int ExpenseGroupStatusId { get; set; }
+        public int ExpenseGroupStatusId { get; set; } //fk of ExpenseGroupStatus
 
-        public virtual ICollection<Expense> Expenses { get; set; }
+        public virtual ICollection<Expense> Expenses { get; set; } //one to many relations
 
-        public virtual ExpenseGroupStatus ExpenseGroupStatus { get; set; }
+        public virtual ExpenseGroupStatus ExpenseGroupStatus { get; set; } //linking 
     }
 }

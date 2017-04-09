@@ -9,7 +9,7 @@ namespace ExpenseTracker.Repository.Entities
     [Table("Expense")]
     public partial class Expense
     {
-        public int Id { get; set; }
+        public int Id { get; set; } //pk
 
         [Required]
         [StringLength(100)]
@@ -20,9 +20,9 @@ namespace ExpenseTracker.Repository.Entities
 
         public decimal Amount { get; set; }
 
-        public int ExpenseGroupId { get; set; }
+        public int ExpenseGroupId { get; set; } //fk of ExpenseGroup
 
-        public virtual ExpenseGroup ExpenseGroup { get; set; }
+        public virtual ExpenseGroup ExpenseGroup { get; set; } //linking 
 
     }
 }

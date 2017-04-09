@@ -11,6 +11,7 @@ using ExpenseTracker.Repository.Helpers;
 
 namespace ExpenseTracker.Repository.Factories
 {
+    //Mapping cls btwn  Entitie and DTO
     public class ExpenseGroupFactory
     {
         ExpenseFactory expenseFactory = new ExpenseFactory();

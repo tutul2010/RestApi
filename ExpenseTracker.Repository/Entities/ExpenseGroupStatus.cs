@@ -14,12 +14,12 @@ namespace ExpenseTracker.Repository.Entities
         }
 
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int Id { get; set; }
+        public int Id { get; set; } //pk
 
         [Required]
         [StringLength(50)]
         public string Description { get; set; }
 
-        public virtual ICollection<ExpenseGroup> ExpenseGroups { get; set; }
+        public virtual ICollection<ExpenseGroup> ExpenseGroups { get; set; } //one to many relations
     }
 }

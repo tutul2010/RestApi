@@ -18,12 +18,12 @@ namespace ExpenseTracker.API
             config.MapHttpAttributeRoutes();
 
             config.Routes.MapHttpRoute(name: "DefaultRouting",
-                routeTemplate: "api/{controller}/{id}",
+                routeTemplate: "api/{controller}/{id}",  //api/expenseGroups
                 defaults: new { id = RouteParameter.Optional });
-
+            //clear all media type
             config.Formatters.XmlFormatter.SupportedMediaTypes.Clear();
 
-
+            //make as json for default content media type
             config.Formatters.JsonFormatter.SerializerSettings.Formatting
                 = Newtonsoft.Json.Formatting.Indented;
 

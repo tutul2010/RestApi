@@ -41,5 +41,88 @@ namespace ExpenseTracker.API.Controllers
                 return InternalServerError(); //http status-500
             }
         }
+        public IHttpActionResult Get(int id)
+        {
+            try
+            {
+                var expenseGroup = _repository.GetExpenseGroup(id);
+
+                if (expenseGroup == null)
+                {
+                    return NotFound(); //http status- 404(not found)
+                }
+                else
+                {
+                    return Ok(_expenseGroupFactory.CreateExpenseGroup(expenseGroup)); //http-status- 200,OK
+                }
+
+            }
+            catch (Exception)
+            {
+                return InternalServerError(); //htttp status -500,internal server error
+            }
+        }
+
+        [HttpPost]
+        public IHttpActionResult Post([FromBody] DTO.ExpenseGroup expenseGroup) //create a new
+        {
+            try
+            {
+                if (expenseGroup == null)
+                {
+                    return BadRequest(); //http-404 
+                }
+
+                var eg = _expenseGroupFactory.CreateExpenseGroup(expenseGroup);
+                var result = _repository.InsertExpenseGroup(eg);
+
+                if (result.Status == RepositoryActionStatus.Created)
+                {
+                    var newExpenseGroup = _expenseGroupFactory.CreateExpenseGroup
+                        (result.Entity);
+
+                    return Created(Request.RequestUri + "/" + newExpenseGroup.Id.ToString()
+                        , newExpenseGroup); //return http-status-201
+                }
+
+                return BadRequest();
+
+            }
+            catch (Exception)
+            {
+                return InternalServerError();
+            }
+        }
+        public IHttpActionResult Put(int id, [FromBody]DTO.ExpenseGroup expenseGroup)
+        {
+            try
+            {
+                if (expenseGroup == null)
+                    return BadRequest();
+
+                // map
+                var eg = _expenseGroupFactory.CreateExpenseGroup(expenseGroup);
+
+                var result = _repository.UpdateExpenseGroup(eg);
+                if (result.Status == RepositoryActionStatus.Updated)
+                {
+                    // map to dto
+                    var updatedExpenseGroup = _expenseGroupFactory
+                        .CreateExpenseGroup(result.Entity);
+                    return Ok(updatedExpenseGroup);
+                }
+                else if (result.Status == RepositoryActionStatus.NotFound)
+                {
+                    return NotFound();
+                }
+
+                return BadRequest();
+            }
+            catch (Exception)
+            {
+                return InternalServerError();
+            }
+
+        }
     }
 }

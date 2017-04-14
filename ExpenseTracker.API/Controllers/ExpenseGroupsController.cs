@@ -1,5 +1,6 @@
 ﻿using ExpenseTracker.Repository;
 using ExpenseTracker.Repository.Factories;
+using Marvin.JsonPatch;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -93,6 +94,7 @@ namespace ExpenseTracker.API.Controllers
                 return InternalServerError();
             }
         }
+        [HttpPut]
         public IHttpActionResult Put(int id, [FromBody]DTO.ExpenseGroup expenseGroup)
         {
             try
@@ -110,6 +112,70 @@ namespace ExpenseTracker.API.Controllers
                     var updatedExpenseGroup = _expenseGroupFactory
                         .CreateExpenseGroup(result.Entity);
                     return Ok(updatedExpenseGroup);
+                }
+                else if (result.Status == RepositoryActionStatus.NotFound)
+                {
+                    return NotFound();
+                }
+
+                return BadRequest();
+            }
+            catch (Exception)
+            {
+                return InternalServerError();
+            }
+
+        }
+        [HttpPatch]
+        public IHttpActionResult Patch(int id,
+           [FromBody]JsonPatchDocument<DTO.ExpenseGroup> expenseGroupPatchDocument)
+        {
+            try
+            {
+                if (expenseGroupPatchDocument == null)
+                {
+                    return BadRequest();
+                }
+
+                var expenseGroup = _repository.GetExpenseGroup(id);
+                if (expenseGroup == null)
+                {
+                    return NotFound();
+                }
+
+                // map
+                var eg = _expenseGroupFactory.CreateExpenseGroup(expenseGroup);
+
+                // apply changes to the DTO
+                expenseGroupPatchDocument.ApplyTo(eg);
+
+                // map the DTO with applied changes to the entity, & update
+                var result = _repository.UpdateExpenseGroup(_expenseGroupFactory.CreateExpenseGroup(eg));
+
+                if (result.Status == RepositoryActionStatus.Updated)
+                {
+                    // map to dto
+                    var patchedExpenseGroup = _expenseGroupFactory.CreateExpenseGroup(result.Entity);
+                    return Ok(patchedExpenseGroup);
+                }
+
+                return BadRequest();
+            }
+            catch (Exception)
+            {
+                return InternalServerError();
+            }
+        }
+        public IHttpActionResult Delete(int id)
+        {
+            try
+            {
+
+                var result = _repository.DeleteExpenseGroup(id);
+
+                if (result.Status == RepositoryActionStatus.Deleted)
+                {
+                    return StatusCode(HttpStatusCode.NoContent);
                 }
                 else if (result.Status == RepositoryActionStatus.NotFound)
                 {

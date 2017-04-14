@@ -22,7 +22,9 @@ namespace ExpenseTracker.API
                 defaults: new { id = RouteParameter.Optional });
             //clear all media type
             config.Formatters.XmlFormatter.SupportedMediaTypes.Clear();
-
+            //support jsonpatch for pertical update
+            config.Formatters.JsonFormatter.SupportedMediaTypes.Add(
+                new MediaTypeHeaderValue("application/json-patch+json"));
             //make as json for default content media type
             config.Formatters.JsonFormatter.SerializerSettings.Formatting
                 = Newtonsoft.Json.Formatting.Indented;

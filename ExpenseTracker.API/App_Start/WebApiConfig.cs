@@ -20,17 +20,25 @@ namespace ExpenseTracker.API
             config.Routes.MapHttpRoute(name: "DefaultRouting",
                 routeTemplate: "api/{controller}/{id}",  //api/expenseGroups
                 defaults: new { id = RouteParameter.Optional });
-            //clear all media type
+
+            // clear the supported mediatypes of the xml formatter
             config.Formatters.XmlFormatter.SupportedMediaTypes.Clear();
+
             //support jsonpatch for pertical update
             config.Formatters.JsonFormatter.SupportedMediaTypes.Add(
                 new MediaTypeHeaderValue("application/json-patch+json"));
-            //make as json for default content media type
-            config.Formatters.JsonFormatter.SerializerSettings.Formatting
-                = Newtonsoft.Json.Formatting.Indented;
 
-            config.Formatters.JsonFormatter.SerializerSettings.ContractResolver
-                = new CamelCasePropertyNamesContractResolver();
+            //make as json for default content media type
+            // results should come out
+            // - with indentation for readability
+            // - in camelCase
+
+            var json = config.Formatters.JsonFormatter;
+            json.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
+            json.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+
+            // configure in memory caching(ETag)
+            config.MessageHandlers.Add(new CacheCow.Server.CachingHandler(config));
 
             return config;
              

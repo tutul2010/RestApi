@@ -30,13 +30,27 @@ namespace ExpenseTracker.API.Controllers
             _repository = repository;
         }
 
-        //api/expenseGroups
+        //api/expensegroups
         [Route("api/expensegroups", Name = "ExpenseGroupsList")]
-        public IHttpActionResult Get(string sort="id",string status=null,
-                                        string userId=null,int page=1,int pageSize= maxPageSize)
+        public IHttpActionResult Get(string fields = null,
+            string sort = "id", string status = null, string userId = null,
+            int page = 1, int pageSize = maxPageSize)
         {
             try
             {
+
+                bool includeExpenses = false;
+                List<string> lstOfFields = new List<string>();
+
+                // we should include expenses when the fields-string contains "expenses", or "expenses.id", …
+                if (fields != null)
+                {
+                    lstOfFields = fields.ToLower().Split(',').ToList();
+                    includeExpenses = lstOfFields.Any(f => f.Contains("expenses"));
+                }
+
+
+
                 int statusId = -1;
                 if (status != null)
                 {
@@ -56,10 +70,17 @@ namespace ExpenseTracker.API.Controllers
                     }
                 }
 
+                IQueryable<Repository.Entities.ExpenseGroup> expenseGroups = null;
+                if (includeExpenses)
+                {
+                    expenseGroups = _repository.GetExpenseGroupsWithExpenses();
+                }
+                else
+                {
+                    expenseGroups = _repository.GetExpenseGroups();
+                }
                 //get expenseGroup from repository
-                // get expensegroups from repository
-                var expenseGroups = _repository.GetExpenseGroups()
-                    .ApplySort(sort)
+                expenseGroups = expenseGroups.ApplySort(sort)
                     .Where(eg => (statusId == -1 || eg.ExpenseGroupStatusId == statusId))
                     .Where(eg => (userId == null || eg.UserId == userId));
 
@@ -68,10 +89,11 @@ namespace ExpenseTracker.API.Controllers
                 {
                     pageSize = maxPageSize;
                 }
+
                 // calculate data for metadata
                 var totalCount = expenseGroups.Count();
-                var totalPages = (int)Math.Ceiling((double)totalCount/pageSize);
-                //create next previous link by UrlHelper
+                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
                 var urlHelper = new UrlHelper(Request);
                 var prevLink = page > 1 ? urlHelper.Link("ExpenseGroupsList",
                     new
@@ -79,6 +101,8 @@ namespace ExpenseTracker.API.Controllers
                         page = page - 1,
                         pageSize = pageSize,
                         sort = sort
+                        ,
+                        fields = fields
                         ,
                         status = status,
                         userId = userId
@@ -89,11 +113,14 @@ namespace ExpenseTracker.API.Controllers
                         page = page + 1,
                         pageSize = pageSize,
                         sort = sort
-                        ,
+                         ,
+                        fields = fields
+                         ,
                         status = status,
                         userId = userId
                     }) : "";
-                //create a header object
+
+                //create pagination header
                 var paginationHeader = new
                 {
                     currentPage = page,
@@ -103,48 +130,69 @@ namespace ExpenseTracker.API.Controllers
                     previousPageLink = prevLink,
                     nextPageLink = nextLink
                 };
-                //added to current http response hedaer as X-Pagination
+                //attached with http response header
                 HttpContext.Current.Response.Headers.Add("X-Pagination",
-                    Newtonsoft.Json.JsonConvert.SerializeObject(paginationHeader));
+                   Newtonsoft.Json.JsonConvert.SerializeObject(paginationHeader));
 
-                //return them after  mapping them to DTO's , with statusCode 200
-               
+
+                // return result
                 return Ok(expenseGroups
                     .Skip(pageSize * (page - 1))
                     .Take(pageSize)
                     .ToList()
-                    .Select(eg => _expenseGroupFactory.CreateExpenseGroup(eg)));
+                    .Select(eg => _expenseGroupFactory.CreateDataShapedObject(eg, lstOfFields)));// field level data shping with association
 
             }
             catch (Exception)
             {
-                return InternalServerError(); //http status-500
+                return InternalServerError();
             }
         }
-        //api/expenseGroups/1
-        public IHttpActionResult Get(int id)
+        //api/expensegroups/1
+        public IHttpActionResult Get(int id, string fields = null)
         {
             try
             {
-                var expenseGroup = _repository.GetExpenseGroup(id);
+                bool includeExpenses = false;
+                List<string> lstOfFields = new List<string>();
 
-                if (expenseGroup == null)
+                // we should include expenses when the fields-string contains "expenses"
+                if (fields != null)
                 {
-                    return NotFound(); //http status- 404(not found)
+                    lstOfFields = fields.ToLower().Split(',').ToList();
+                    includeExpenses = lstOfFields.Any(f => f.Contains("expenses"));
+                }
+
+
+                Repository.Entities.ExpenseGroup expenseGroup;
+                if (includeExpenses)
+                {
+                    expenseGroup = _repository.GetExpenseGroupWithExpenses(id);
                 }
                 else
                 {
-                    return Ok(_expenseGroupFactory.CreateExpenseGroup(expenseGroup)); //http-status- 200,OK
+                    expenseGroup = _repository.GetExpenseGroup(id);
+
                 }
 
+
+                if (expenseGroup != null)
+                {
+                    return Ok(_expenseGroupFactory.CreateDataShapedObject(expenseGroup, lstOfFields));
+                }
+                else
+                {
+                    return NotFound();
+                }
             }
             catch (Exception)
             {
-                return InternalServerError(); //htttp status -500,internal server error
+                return InternalServerError();
             }
         }
 
         [HttpPost]
+        [Route("api/expensegroups")]
         public IHttpActionResult Post([FromBody] DTO.ExpenseGroup expenseGroup) //create a new
         {
             try
@@ -153,12 +201,13 @@ namespace ExpenseTracker.API.Controllers
                 {
                     return BadRequest(); //http-404 
                 }
-
+                // try mapping & saving
                 var eg = _expenseGroupFactory.CreateExpenseGroup(expenseGroup);
                 var result = _repository.InsertExpenseGroup(eg);
 
                 if (result.Status == RepositoryActionStatus.Created)
                 {
+                    // map to dto
                     var newExpenseGroup = _expenseGroupFactory.CreateExpenseGroup
                         (result.Entity);
 

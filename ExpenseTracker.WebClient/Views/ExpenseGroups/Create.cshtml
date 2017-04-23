@@ -8,10 +8,14 @@
 <h2>Create a New Expense Group</h2>
 
 
-@using (Html.BeginForm()) 
+@using (Html.BeginForm())
 {
-    @Html.AntiForgeryToken()
-    
+    @*
+        generate  AntiForgery Token on client side for preventing the CSRF hack
+    *@
+
+    @Html.AntiForgeryToken()    
+
     <div class="form-horizontal">
    
         <hr />

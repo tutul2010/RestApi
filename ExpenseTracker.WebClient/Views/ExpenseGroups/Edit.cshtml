@@ -10,6 +10,10 @@
 
 @using (Html.BeginForm())
 {
+    @*
+        generate  AntiForgery Token on client side for preventing the CSRF hack
+    *@
+
     @Html.AntiForgeryToken()
     
     <div class="form-horizontal">

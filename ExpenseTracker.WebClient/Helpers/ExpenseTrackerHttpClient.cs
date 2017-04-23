@@ -14,7 +14,7 @@ namespace ExpenseTracker.WebClient.Helpers
         {
             HttpClient client = new HttpClient();
 
-            client.BaseAddress = new Uri(ExpenseTrackerConstants.ExpenseTrackerAPI);
+            client.BaseAddress = new Uri(ExpenseTrackerConstants.ExpenseTrackerAPI); //set the api resource uri
             client.DefaultRequestHeaders.Accept.Clear();
             //accept only json format
             client.DefaultRequestHeaders.Accept.Add(
